@@ -9,7 +9,14 @@ const sendError = (res, message, statusCode = 500, details = null) => {
 };
 
 const errorMiddleware = (err, req, res, next) => {
-  console.error(err);
+  if (process.env.NODE_ENV === 'production') {
+    console.error('API request failed:', {
+      name: err.name || 'Error',
+      statusCode: err.statusCode || 500,
+    });
+  } else {
+    console.error(err);
+  }
 
   if (err.name === 'ValidationError') {
     return sendError(res, 'Validation failed.', 400, err.message);
@@ -33,7 +40,9 @@ const errorMiddleware = (err, req, res, next) => {
   }
 
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Something went wrong on the server.';
+  const message = process.env.NODE_ENV === 'production' && statusCode >= 500
+    ? 'Internal server error.'
+    : err.message || 'Something went wrong on the server.';
 
   return sendError(res, message, statusCode);
 };

@@ -57,7 +57,7 @@ The health endpoint returns HTTP 503 with `database: "disconnected"` when MongoD
 
 Deploy the `backend` directory as the service root. Install dependencies with `npm install`, use `npm start` as the start command, and leave the build command empty (or use `npm run build`, which is a no-op check). Set `NODE_ENV=production`, `PORT` as provided by the host, and the required database, JWT, and allowed-origin values listed above. Set `CLIENT_URL` and `CORS_ORIGIN` to the exact deployed frontend origin(s). Do not configure `ADMIN_PASSWORD` as a permanent production secret; use it only for first-account provisioning, then remove it. Verify MongoDB connectivity at `/api/health`, which must return HTTP 200 and `database: "connected"`.
 
-Deploy the `client` directory as a separate frontend service. Build with `npm run build` and publish `dist`. Set the frontend build variable `VITE_API_URL` to the deployed backend API base URL ending in `/api`; if it is omitted, production uses the relative `/api` path and requires a same-origin reverse proxy.
+Deploy the `client` directory as a separate frontend service. Build with `npm run build` and publish `dist`. Set the Vercel build variable `VITE_API_URL` to `https://amade-software-0epp.onrender.com/api`. The client has this Render URL as its production fallback; local development defaults to `http://localhost:5000/api`. Changes to this Vite variable require a new frontend deployment.
 
 ## Roles
 

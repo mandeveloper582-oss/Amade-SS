@@ -12,7 +12,7 @@ async function startServer() {
       throw new Error('MongoDB is required before starting in production.');
     }
 
-    const server = app.listen(PORT, () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`AMADE backend listening on port ${PORT}`);
     });
 

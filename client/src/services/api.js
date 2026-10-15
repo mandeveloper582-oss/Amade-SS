@@ -20,7 +20,11 @@ const getTokenKeyForCurrentRoute = () => {
 };
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "/api" : "http://localhost:5000/api"),
+  baseURL: import.meta.env.VITE_API_URL || (
+    import.meta.env.PROD
+      ? "https://amade-software-0epp.onrender.com/api"
+      : "http://localhost:5000/api"
+  ),
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
