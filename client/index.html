@@ -12,6 +12,24 @@
       name="keywords"
       content="AMADE, software solutions, technology training, entrepreneurship, web development, digital solutions"
     />
+    <script>
+      (() => {
+        let theme = "system";
+        try {
+          const storedTheme = localStorage.getItem("amade-theme");
+          if (["light", "dark", "system"].includes(storedTheme)) theme = storedTheme;
+        } catch {
+          // The system preference remains available when browser storage is blocked.
+        }
+        const dark = theme === "dark"
+          || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+        const root = document.documentElement;
+        root.dataset.theme = dark ? "dark" : "light";
+        root.dataset.themePreference = theme;
+        root.style.colorScheme = dark ? "dark" : "light";
+        root.classList.toggle("dark", dark);
+      })();
+    </script>
     <title>AMADE Software Solutions | Build. Learn. Innovate. Grow.</title>
   </head>
   <body>

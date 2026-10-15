@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { ArrowUpRight, Menu, Moon, Sun, X } from "lucide-react";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
-import { useTheme } from "../context/themeContextValue";
+import ThemeSelector from "./ThemeSelector";
 
 const links = [
   { name: "Home", path: "/" },
@@ -15,7 +15,6 @@ const links = [
 
 function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { darkMode, toggleTheme } = useTheme();
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/80">
@@ -58,14 +57,7 @@ function Navbar() {
           >
             Student Login
           </Link>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label="Toggle dark mode"
-            className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <ThemeSelector />
 
           <Link
             to="/contact"
@@ -77,14 +69,7 @@ function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label="Toggle dark mode"
-            className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-          >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <ThemeSelector />
 
           <button
             type="button"

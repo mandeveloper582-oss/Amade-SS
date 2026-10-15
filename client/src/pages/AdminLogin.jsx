@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { LockKeyhole, ShieldCheck } from "lucide-react";
+import ThemeSelector from "../components/ThemeSelector";
 import { useAdminAuth } from "../context/adminAuthContextValue";
 
 function AdminLogin() {
@@ -35,7 +36,10 @@ function AdminLogin() {
   };
 
   return (
-    <main className="grid min-h-screen place-items-center bg-slate-100 px-4 py-12 dark:bg-slate-950">
+    <main className="relative grid min-h-screen place-items-center bg-slate-100 px-4 pb-12 pt-20 dark:bg-slate-950">
+      <div className="absolute right-4 top-4 z-10">
+        <ThemeSelector />
+      </div>
       <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:p-10">
         <a href="/" className="inline-flex items-center gap-3 text-sm font-bold text-slate-900 dark:text-white">
           <span className="grid size-11 place-items-center rounded-2xl bg-slate-950 text-green-400">

@@ -3,6 +3,7 @@ import {
   BookOpen, BriefcaseBusiness, FileText, GraduationCap, LayoutDashboard,
   LogOut, Mail, ShieldCheck, Users, Wrench,
 } from "lucide-react";
+import ThemeSelector from "../ThemeSelector";
 import { useAdminAuth } from "../../context/adminAuthContextValue";
 
 const navigation = [
@@ -53,8 +54,9 @@ function AdminContentLayout({ children }) {
         </div>
       </aside>
       <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
-        <div className="mb-5 flex justify-end lg:hidden">
-          <button onClick={logout} className="rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white dark:bg-green-500 dark:text-slate-950">Sign out</button>
+        <div className="mb-5 flex justify-end gap-3">
+          <ThemeSelector />
+          <button onClick={logout} className="rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white dark:bg-green-500 dark:text-slate-950 lg:hidden">Sign out</button>
         </div>
         {children}
       </main>

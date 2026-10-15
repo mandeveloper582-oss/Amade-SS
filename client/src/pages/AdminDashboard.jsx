@@ -5,6 +5,7 @@ import {
   LayoutDashboard, LogOut, Mail, RefreshCw, Settings, ShieldCheck,
   Users, Wrench,
 } from "lucide-react";
+import ThemeSelector from "../components/ThemeSelector";
 import { useAdminAuth } from "../context/adminAuthContextValue";
 import api, { getHealth } from "../services/api";
 
@@ -101,7 +102,8 @@ function AdminDashboard() {
             <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">Good to see you, {user.name.split(" ")[0]}</h1>
             <p className="mt-2 text-slate-600 dark:text-slate-300">Live platform totals and the latest activity.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <ThemeSelector />
             <div className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold ${databaseConnected ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300" : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"}`}>
               <span className={`size-2 rounded-full ${databaseConnected ? "bg-green-500" : "bg-amber-500"}`} />
               Database {databaseConnected ? "connected" : "unavailable"}

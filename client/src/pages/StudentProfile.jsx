@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { LogOut, Save, UserCircle2 } from "lucide-react";
+import ThemeSelector from "../components/ThemeSelector";
 import { useStudentAuth } from "../context/studentAuthContextValue";
 import api from "../services/api";
 
@@ -101,7 +102,8 @@ function StudentProfile() {
             <h1 className="mt-1 text-2xl font-black">Profile settings</h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <ThemeSelector />
             <Link to="/student/dashboard" className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Dashboard</Link>
             <button onClick={logout} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white dark:bg-green-500 dark:text-slate-950">
               <LogOut aria-hidden="true" size={16} /> Sign out

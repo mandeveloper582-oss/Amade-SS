@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { BookOpen, GraduationCap, LogOut } from "lucide-react";
+import ThemeSelector from "../components/ThemeSelector";
 import { useStudentAuth } from "../context/studentAuthContextValue";
 import api from "../services/api";
 
@@ -48,7 +49,8 @@ function StudentCourses() {
             <h1 className="mt-1 text-2xl font-black">My courses</h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <ThemeSelector />
             <Link to="/student/dashboard" className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Dashboard</Link>
             <Link to="/academy" className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Explore courses</Link>
             <button onClick={logout} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white dark:bg-green-500 dark:text-slate-950">

@@ -1,19 +1,46 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
+  --color-bg: #f8fafc;
+  --color-bg-secondary: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-text: #0f172a;
+  --color-text-secondary: #334155;
+  --color-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-input-bg: #ffffff;
+  --color-input-text: #0f172a;
+  --color-input-border: #cbd5e1;
+  --color-button-bg: #0f172a;
+  --color-button-text: #ffffff;
+  --color-link: #15803d;
+  --color-link-hover: #166534;
+  --color-navigation-bg: rgba(255, 255, 255, 0.92);
+  --color-sidebar-bg: #020817;
+  --color-dropdown-bg: #ffffff;
+  --color-modal-bg: #ffffff;
+  --color-table-header-bg: #f1f5f9;
+  --color-table-row-hover: #f8fafc;
+  --color-form-control-bg: #ffffff;
+  --color-alert-bg: #fef2f2;
+  --color-alert-text: #b91c1c;
+  --color-focus: #16a34a;
+  --shadow-panel: 0 10px 30px rgba(15, 23, 42, 0.08);
   font-family: Inter, "Segoe UI", sans-serif;
-  color: #0f172a;
-  background-color: #f8fafc;
+  color: var(--color-text);
+  background-color: var(--color-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --color-bg: #f8fafc;
-  --color-surface: #ffffff;
-  --color-surface-soft: #f1f5f9;
-  --color-text: #0f172a;
-  --color-muted: #475569;
-  --color-border: rgba(15, 23, 42, 0.08);
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-surface-soft: var(--color-bg-secondary);
   --color-primary: #16a34a;
 }
 
@@ -21,23 +48,47 @@ html {
   scroll-behavior: smooth;
 }
 
-html.dark {
+[data-theme="dark"] {
   color-scheme: dark;
   --color-bg: #020817;
+  --color-bg-secondary: #0b1220;
   --color-surface: #0f172a;
-  --color-surface-soft: #111827;
+  --color-surface-raised: #111c2e;
   --color-text: #f8fafc;
-  --color-muted: #cbd5e1;
-  --color-border: rgba(148, 163, 184, 0.16);
+  --color-text-secondary: #cbd5e1;
+  --color-muted: #94a3b8;
+  --color-border: #263449;
+  --color-input-bg: #020817;
+  --color-input-text: #f8fafc;
+  --color-input-border: #334155;
+  --color-button-bg: #22c55e;
+  --color-button-text: #020817;
+  --color-link: #4ade80;
+  --color-link-hover: #86efac;
+  --color-navigation-bg: rgba(2, 8, 23, 0.92);
+  --color-sidebar-bg: #020817;
+  --color-dropdown-bg: #0f172a;
+  --color-modal-bg: #0f172a;
+  --color-table-header-bg: #111c2e;
+  --color-table-row-hover: #111c2e;
+  --color-form-control-bg: #020817;
+  --color-alert-bg: rgba(127, 29, 29, 0.25);
+  --color-alert-text: #fecaca;
+  --color-focus: #4ade80;
+  --shadow-panel: 0 12px 36px rgba(0, 0, 0, 0.3);
   --color-primary: #4ade80;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: var(--color-bg);
-  color: var(--color-text);
 }
 
 * {
@@ -58,6 +109,15 @@ select {
 
 button {
   cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 a {

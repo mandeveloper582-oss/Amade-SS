@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { BookOpen, BriefcaseBusiness, GraduationCap, LogOut, UserCircle2 } from "lucide-react";
+import ThemeSelector from "../components/ThemeSelector";
 import { useStudentAuth } from "../context/studentAuthContextValue";
 import api from "../services/api";
 
@@ -57,7 +58,8 @@ function StudentDashboard() {
             <h1 className="mt-1 text-2xl font-black">Welcome, {user.name?.split(" ")[0] || "student"}</h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <ThemeSelector />
             <Link to="/student/profile" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
               <UserCircle2 aria-hidden="true" size={16} /> Profile
             </Link>
