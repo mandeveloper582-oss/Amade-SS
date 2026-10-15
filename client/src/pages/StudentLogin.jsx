@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, GraduationCap, LockKeyhole } from "lucide-react";
 import ThemeSelector from "../components/ThemeSelector";
 import { useStudentAuth } from "../context/studentAuthContextValue";
+import { getApiErrorMessage } from "../services/api";
 
 function StudentLogin() {
   const { user, login, isLoading } = useStudentAuth();
@@ -33,7 +34,7 @@ function StudentLogin() {
         : location.state?.redirectTo || "/student/dashboard";
       navigate(redirectTo, { replace: true });
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || "Unable to sign in. Please try again.");
+      setError(getApiErrorMessage(requestError));
     } finally {
       setIsSubmitting(false);
     }

@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, GraduationCap, UserRoundPlus } from "lucide-react";
 import ThemeSelector from "../components/ThemeSelector";
 import { useStudentAuth } from "../context/studentAuthContextValue";
+import { getApiErrorMessage } from "../services/api";
 
 function StudentRegister() {
   const { user, register, isLoading } = useStudentAuth();
@@ -28,6 +29,7 @@ function StudentRegister() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
     setError("");
 
     if (form.password !== form.confirmPassword) {
@@ -60,7 +62,7 @@ function StudentRegister() {
         },
       });
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || "Your account could not be created. Please try again.");
+      setError(getApiErrorMessage(requestError));
     } finally {
       setIsSubmitting(false);
     }

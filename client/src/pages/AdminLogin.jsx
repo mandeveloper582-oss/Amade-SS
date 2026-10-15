@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { LockKeyhole, ShieldCheck } from "lucide-react";
 import ThemeSelector from "../components/ThemeSelector";
 import { useAdminAuth } from "../context/adminAuthContextValue";
+import { getApiErrorMessage } from "../services/api";
 
 function AdminLogin() {
   const { user, login, isLoading } = useAdminAuth();
@@ -29,7 +30,7 @@ function AdminLogin() {
       await login({ email, password });
       navigate("/admin", { replace: true });
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || "Unable to sign in. Please try again.");
+      setError(getApiErrorMessage(requestError));
     } finally {
       setIsSubmitting(false);
     }

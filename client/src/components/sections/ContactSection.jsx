@@ -40,26 +40,32 @@ function ContactSection() {
   const validate = () => {
     const nextErrors = {};
 
-    if (!form.fullName.trim()) {
-      nextErrors.fullName = "Full name is required.";
+    if (form.fullName.trim().length < 2 || form.fullName.trim().length > 120) {
+      nextErrors.fullName = "Full name must be between 2 and 120 characters.";
     }
 
     if (!form.email.trim()) {
       nextErrors.email = "Email is required.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       nextErrors.email = "Please enter a valid email address.";
+    } else if (form.email.trim().length > 254) {
+      nextErrors.email = "Email must be 254 characters or fewer.";
+    }
+
+    if (form.phone.trim().length > 30) {
+      nextErrors.phone = "Phone must be 30 characters or fewer.";
     }
 
     if (!form.service) {
       nextErrors.service = "Please select a service.";
     }
 
-    if (form.subject.trim().length < 2) {
-      nextErrors.subject = "Subject must be at least 2 characters.";
+    if (form.subject.trim().length < 2 || form.subject.trim().length > 180) {
+      nextErrors.subject = "Subject must be between 2 and 180 characters.";
     }
 
-    if (!form.message.trim()) {
-      nextErrors.message = "Message is required.";
+    if (form.message.trim().length < 10 || form.message.trim().length > 10000) {
+      nextErrors.message = "Message must be between 10 and 10,000 characters.";
     }
 
     return nextErrors;
@@ -67,6 +73,8 @@ function ContactSection() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+
     const nextErrors = validate();
 
     if (Object.keys(nextErrors).length > 0) {
@@ -155,6 +163,9 @@ function ContactSection() {
                 id="fullName"
                 name="fullName"
                 type="text"
+                required
+                minLength={2}
+                maxLength={120}
                 value={form.fullName}
                 onChange={handleChange}
                 placeholder="Your name"
@@ -171,6 +182,9 @@ function ContactSection() {
                 id="email"
                 name="email"
                 type="email"
+                required
+                maxLength={254}
+                maxLength={254}
                 value={form.email}
                 onChange={handleChange}
                 placeholder="you@example.com"
@@ -187,6 +201,7 @@ function ContactSection() {
                 id="phone"
                 name="phone"
                 type="tel"
+                maxLength={30}
                 value={form.phone}
                 onChange={handleChange}
                 placeholder="+251..."
@@ -201,6 +216,7 @@ function ContactSection() {
               <select
                 id="service"
                 name="service"
+                required
                 value={form.service}
                 onChange={handleChange}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-green-500 dark:border-slate-700 dark:bg-slate-900"
@@ -221,6 +237,8 @@ function ContactSection() {
                 id="subject"
                 name="subject"
                 type="text"
+                required
+                minLength={2}
                 maxLength={180}
                 value={form.subject}
                 onChange={handleChange}
@@ -238,6 +256,9 @@ function ContactSection() {
                 id="message"
                 name="message"
                 rows="6"
+                required
+                minLength={10}
+                maxLength={10000}
                 value={form.message}
                 onChange={handleChange}
                 placeholder="Tell us about your project..."
@@ -256,6 +277,7 @@ function ContactSection() {
           <button
             type="submit"
             disabled={isSubmitting}
+            aria-busy={isSubmitting}
             className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-6 py-3.5 font-bold text-slate-950 transition hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isSubmitting ? "Sending..." : "Send Message"}
