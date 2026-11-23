@@ -13,6 +13,13 @@ const cards = [
   { label: "Total users", key: "totalUsers", icon: Users, color: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300" },
   { label: "Students", key: "totalStudents", icon: GraduationCap, color: "bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300" },
   { label: "Courses", key: "totalCourses", icon: BookOpen, color: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300" },
+  { label: "Published lessons", key: "publishedLessons", icon: BookOpen, color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" },
+  { label: "Learning modules", key: "publishedModules", icon: BookOpen, color: "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300" },
+  { label: "Course completion", key: "courseCompletionRate", suffix: "%", icon: GraduationCap, color: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300" },
+  { label: "Average progress", key: "averageCourseProgress", suffix: "%", icon: Activity, color: "bg-cyan-50 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300" },
+  { label: "Quiz pass rate", key: "quizPassRate", suffix: "%", icon: ShieldCheck, color: "bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300" },
+  { label: "Average quiz score", key: "averageQuizScore", suffix: "%", icon: GraduationCap, color: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300" },
+  { label: "Quiz attempts", key: "quizAttempts", icon: Activity, color: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
   { label: "Projects", key: "totalProjects", icon: BriefcaseBusiness, color: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
   { label: "Services", key: "totalServices", icon: Wrench, color: "bg-cyan-50 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300" },
   { label: "Blog posts", key: "totalBlogPosts", icon: FileText, color: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300" },
@@ -118,13 +125,13 @@ function AdminDashboard() {
         {error && <div role="alert" className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"><span>{error}</span><button onClick={refreshDashboard} className="font-bold underline">Try again</button></div>}
 
         <section aria-label="Platform statistics" className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {cards.map(({ label, key, icon: Icon, color }) => (
+          {cards.map(({ label, key, suffix = "", icon: Icon, color }) => (
             <article key={key} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{label}</p>
                 <span className={`grid size-10 place-items-center rounded-xl ${color}`}><Icon aria-hidden="true" size={19} /></span>
               </div>
-              <p className="mt-4 text-3xl font-black tabular-nums">{isLoading ? "—" : stats ? (stats[key] ?? 0).toLocaleString() : "—"}</p>
+              <p className="mt-4 text-3xl font-black tabular-nums">{isLoading ? "—" : stats ? `${(stats[key] ?? 0).toLocaleString()}${suffix}` : "—"}</p>
             </article>
           ))}
         </section>

@@ -43,6 +43,13 @@ const courseSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    learningObjectives: [{ type: String }],
+    prerequisites: [{ type: String }],
+    finalProject: {
+      title: { type: String, trim: true, maxlength: 160, default: '' },
+      instructions: { type: String, trim: true, maxlength: 5000, default: '' },
+      requirements: [{ type: String, trim: true, maxlength: 500 }],
+    },
     isPublished: {
       type: Boolean,
       default: false,

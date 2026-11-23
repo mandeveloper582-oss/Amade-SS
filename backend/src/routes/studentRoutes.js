@@ -15,6 +15,7 @@ const {
 const { protect, authorize } = require('../middleware/authMiddleware');
 const validateRequest = require('../middleware/validateMiddleware');
 const { updateProfileValidator } = require('../validators/studentValidator');
+const { issueCertificate } = require('../controllers/certificateController');
 
 const router = express.Router();
 
@@ -26,6 +27,7 @@ router.put('/profile', protect, authorize('student'), updateProfileValidator, va
 router.get('/dashboard', protect, authorize('student'), getDashboard);
 router.get('/courses', protect, authorize('student'), getAvailableCourses);
 router.get('/my-courses', protect, authorize('student'), getMyCourses);
+router.post('/courses/:courseId/certificate', protect, authorize('student'), issueCertificate);
 router.get('/courses/:courseId/lessons', protect, authorize('student'), getCourseLessons);
 router.get('/progress', protect, authorize('student'), getProgress);
 router.put('/lessons/:lessonId/complete', protect, authorize('student'), markLessonComplete);

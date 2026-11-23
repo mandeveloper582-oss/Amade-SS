@@ -16,6 +16,10 @@ const blogRoutes = require('./routes/blogRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const quizRoutes = require('./routes/quizRoutes');
+const moduleRoutes = require('./routes/moduleRoutes');
+const certificateRoutes = require('./routes/certificateRoutes');
+const courseProjectRoutes = require('./routes/courseProjectRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const { isDatabaseConnected } = require('./config/db');
 
@@ -39,7 +43,13 @@ const allowedOrigins = [...new Set([
 const isLocalViteOrigin = (origin) =>
   /^http:\/\/(?:localhost|127\.0\.0\.1):517\d$/.test(origin || '');
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      frameSrc: ["'self'", 'blob:'],
+    },
+  },
+}));
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -58,7 +68,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+const publicUploads = express.static(path.join(__dirname, '../uploads'));
+app.use('/uploads', (req, res, next) => {
+  if (path.extname(req.path).toLowerCase() === '.pdf') {
+    return res.sendStatus(404);
+  }
+  return publicUploads(req, res, next);
+});
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -94,6 +110,10 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/contact', messageRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/quizzes', quizRoutes);
+app.use('/api/modules', moduleRoutes);
+app.use('/api/certificates', certificateRoutes);
+app.use('/api/final-projects', courseProjectRoutes);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);

@@ -5,6 +5,9 @@ const BlogPost = require('../models/BlogPost');
 const Message = require('../models/Message');
 const Enrollment = require('../models/Enrollment');
 const Service = require('../models/Service');
+const Lesson = require('../models/Lesson');
+const CourseModule = require('../models/CourseModule');
+const QuizAttempt = require('../models/QuizAttempt');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess } = require('../utils/apiResponse');
 
@@ -24,6 +27,10 @@ const getStats = asyncHandler(async (req, res) => {
     publishedBlogPosts,
     totalMessages,
     newMessages,
+    publishedLessons,
+    publishedModules,
+    enrollmentAnalytics,
+    quizAnalytics,
   ] = await Promise.all([
     User.countDocuments(),
     User.countDocuments({ role: 'student' }),
@@ -39,7 +46,32 @@ const getStats = asyncHandler(async (req, res) => {
     BlogPost.countDocuments({ status: 'published' }),
     Message.countDocuments(),
     Message.countDocuments({ status: 'new' }),
+    Lesson.countDocuments({ isPublished: true }),
+    CourseModule.countDocuments({ isPublished: true }),
+    Enrollment.aggregate([
+      { $match: { status: { $in: ['active', 'completed'] } } },
+      {
+        $group: {
+          _id: null,
+          count: { $sum: 1 },
+          averageProgress: { $avg: '$progress' },
+          completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
+        },
+      },
+    ]),
+    QuizAttempt.aggregate([
+      {
+        $group: {
+          _id: null,
+          count: { $sum: 1 },
+          averageScore: { $avg: '$score' },
+          passed: { $sum: { $cond: ['$passed', 1, 0] } },
+        },
+      },
+    ]),
   ]);
+  const enrollmentStats = enrollmentAnalytics[0] || { count: 0, averageProgress: 0, completed: 0 };
+  const quizStats = quizAnalytics[0] || { count: 0, averageScore: 0, passed: 0 };
 
   const recentEnrollments = await Enrollment.find({})
     .sort({ createdAt: -1 })
@@ -73,6 +105,15 @@ const getStats = asyncHandler(async (req, res) => {
     publishedBlogPosts,
     totalMessages,
     newMessages,
+    publishedLessons,
+    publishedModules,
+    averageCourseProgress: Number((enrollmentStats.averageProgress || 0).toFixed(1)),
+    courseCompletionRate: enrollmentStats.count
+      ? Number(((enrollmentStats.completed / enrollmentStats.count) * 100).toFixed(1))
+      : 0,
+    quizAttempts: quizStats.count,
+    averageQuizScore: Number((quizStats.averageScore || 0).toFixed(1)),
+    quizPassRate: quizStats.count ? Number(((quizStats.passed / quizStats.count) * 100).toFixed(1)) : 0,
     recentEnrollments,
     recentMessages,
     recentUsers,

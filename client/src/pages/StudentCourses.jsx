@@ -3,7 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { BookOpen, GraduationCap, LogOut } from "lucide-react";
 import ThemeSelector from "../components/ThemeSelector";
 import { useStudentAuth } from "../context/studentAuthContextValue";
-import api from "../services/api";
+import api, { resolveMediaUrl } from "../services/api";
 
 function StudentCourses() {
   const { user, isLoading: isAuthLoading, logout } = useStudentAuth();
@@ -72,7 +72,7 @@ function StudentCourses() {
               return (
                 <article key={enrollment._id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                   {course.thumbnail ? (
-                    <img src={course.thumbnail} alt="" className="h-40 w-full object-cover" />
+                    <img src={resolveMediaUrl(course.thumbnail)} alt="" className="h-40 w-full object-cover" />
                   ) : (
                     <div className="flex h-40 items-center justify-center bg-gradient-to-br from-green-100 via-white to-slate-100 text-slate-900 dark:from-green-950 dark:via-slate-900 dark:to-slate-950 dark:text-white">
                       <BookOpen aria-hidden="true" size={42} className="text-green-600 dark:text-green-400" />
@@ -100,6 +100,11 @@ function StudentCourses() {
                     <Link to={`/academy/${course._id}`} className="mt-5 block rounded-xl bg-slate-950 px-3 py-2.5 text-center text-sm font-bold text-white transition hover:bg-slate-800 dark:bg-green-500 dark:text-slate-950 dark:hover:bg-green-400">
                       {enrollment.status === "completed" ? "Review course" : "Continue learning"}
                     </Link>
+                    {enrollment.status === "completed" && (
+                      <Link to={`/student/courses/${course._id}/certificate`} className="mt-2 block rounded-xl border border-green-600 px-3 py-2.5 text-center text-sm font-bold text-green-800 transition hover:bg-green-50 dark:text-green-300 dark:hover:bg-green-950/40">
+                        View certificate
+                      </Link>
+                    )}
                   </div>
                 </article>
               );

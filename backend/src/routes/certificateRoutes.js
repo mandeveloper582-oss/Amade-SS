@@ -1,0 +1,8 @@
+const express = require('express');
+const { verifyCertificate } = require('../controllers/certificateController');
+
+const router = express.Router();
+
+router.get('/verify/:certificateNumber', verifyCertificate);
+
+module.exports = router;

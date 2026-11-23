@@ -4,7 +4,7 @@ import { BookOpen, BriefcaseBusiness, CheckCircle2, Code2 } from "lucide-react";
 import Button from "../Button";
 import SectionTitle from "../SectionTitle";
 import { courses } from "../../data/courses";
-import api from "../../services/api";
+import api, { resolveMediaUrl } from "../../services/api";
 
 const courseIcons = [Code2, BookOpen, BriefcaseBusiness];
 
@@ -59,7 +59,7 @@ function AcademySection() {
                 whileHover={{ y: -6 }}
                 className="rounded-3xl border border-white/10 bg-white/[0.05] p-7 backdrop-blur transition-all duration-300"
               >
-                {course.thumbnail && <img src={course.thumbnail} alt="" className="mb-6 h-40 w-full rounded-2xl object-cover" />}
+                {course.thumbnail && <img src={resolveMediaUrl(course.thumbnail)} alt="" className="mb-6 h-40 w-full rounded-2xl object-cover" />}
                 <div className="flex items-center justify-between">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-500 text-slate-950">
                     <Icon size={23} />

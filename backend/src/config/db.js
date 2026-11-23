@@ -13,14 +13,27 @@ async function seedDefaultAdmin() {
     return;
   }
 
-  const existing = await User.findOne({ email: adminEmail.toLowerCase() });
+  const normalizedEmail = adminEmail.toLowerCase();
+  const existing = await User.findOne({ email: normalizedEmail });
+
   if (existing) {
+    const needsUpdate = existing.role !== 'super_admin' || !existing.isActive || existing.password === undefined;
+
+    if (needsUpdate) {
+      existing.role = 'super_admin';
+      existing.isActive = true;
+      if (!existing.password || existing.password === process.env.ADMIN_PASSWORD) {
+        existing.password = adminPassword;
+      }
+      await existing.save();
+      console.log('Existing admin account updated to super_admin.');
+    }
     return;
   }
 
   await User.create({
     name: process.env.ADMIN_NAME || 'AMADE Admin',
-    email: adminEmail.toLowerCase(),
+    email: normalizedEmail,
     password: adminPassword,
     role: 'super_admin',
     isActive: true,

@@ -13,6 +13,10 @@ This backend provides the API foundation for AMADE Software Solutions, including
 5. Production:
    npm start
 
+## Tests
+
+Run `npm test` from the backend directory to execute the LMS API integration test against a temporary MongoDB instance. The test does not use `MONGO_URI`; it may download the MongoDB test binary on its first run.
+
 ## Environment variables
 
 - `NODE_ENV`

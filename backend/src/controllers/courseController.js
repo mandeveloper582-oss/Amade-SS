@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 const Course = require('../models/Course');
 const Lesson = require('../models/Lesson');
 const Enrollment = require('../models/Enrollment');
+const CourseModule = require('../models/CourseModule');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const slugify = require('../utils/slugify');
+const { buildStudentLessonView } = require('../utils/lessonAccess');
 
 const getAdminCourses = asyncHandler(async (req, res) => {
   const page = Number(req.query.page || 1);
@@ -109,7 +111,7 @@ const getCourseById = asyncHandler(async (req, res) => {
 const createCourse = asyncHandler(async (req, res) => {
   const {
     title, description, thumbnail, category, status, duration,
-    level, technologies, price, isPublished,
+    level, technologies, price, isPublished, learningObjectives, prerequisites,
   } = req.body;
   const normalizedStatus = status || 'draft';
   const course = await Course.create({
@@ -122,6 +124,8 @@ const createCourse = asyncHandler(async (req, res) => {
     level,
     technologies,
     price,
+    learningObjectives,
+    prerequisites,
     isPublished: normalizedStatus === 'published' && isPublished === true,
     slug: slugify(title),
   });
@@ -143,6 +147,7 @@ const updateCourse = asyncHandler(async (req, res) => {
   const editableFields = [
     'title', 'description', 'thumbnail', 'category', 'status',
     'duration', 'level', 'technologies', 'price',
+    'learningObjectives', 'prerequisites',
   ];
   editableFields.forEach((field) => {
     if (req.body[field] !== undefined) {
@@ -163,11 +168,58 @@ const updateCourse = asyncHandler(async (req, res) => {
   return sendSuccess(res, 'Course updated successfully.', course);
 });
 
+const updateCourseFinalProject = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return sendError(res, 'Invalid course id.', 400);
+  }
+
+  const { title, instructions, requirements } = req.body;
+  if (typeof title !== 'string' || title.trim().length > 160) {
+    return sendError(res, 'Final project title must be text with at most 160 characters.', 400);
+  }
+  if (typeof instructions !== 'string' || instructions.length > 5000) {
+    return sendError(res, 'Final project instructions must be text with at most 5000 characters.', 400);
+  }
+  if (!Array.isArray(requirements) || requirements.length > 20 || requirements.some(
+    (requirement) => typeof requirement !== 'string' || requirement.trim().length > 500,
+  )) {
+    return sendError(res, 'Final project requirements must be an array of up to 20 text items.', 400);
+  }
+
+  const normalizedTitle = title.trim();
+  const normalizedRequirements = requirements.map((requirement) => requirement.trim()).filter(Boolean);
+  if (!normalizedTitle && (instructions.trim() || normalizedRequirements.length)) {
+    return sendError(res, 'Add a final project title or clear its instructions and requirements.', 400);
+  }
+
+  const course = await Course.findById(req.params.id);
+  if (!course) {
+    return sendError(res, 'Course not found.', 404);
+  }
+
+  course.finalProject = {
+    title: normalizedTitle,
+    instructions: instructions.trim(),
+    requirements: normalizedRequirements,
+  };
+  await course.save();
+  return sendSuccess(res, 'Final project assignment saved successfully.', course.finalProject);
+});
+
 const deleteCourse = asyncHandler(async (req, res) => {
   const course = await Course.findById(req.params.id);
 
   if (!course) {
     return sendError(res, 'Course not found.', 404);
+  }
+
+  const [lessonExists, enrollmentExists, moduleExists] = await Promise.all([
+    Lesson.exists({ course: course._id }),
+    Enrollment.exists({ course: course._id }),
+    CourseModule.exists({ course: course._id }),
+  ]);
+  if (lessonExists || enrollmentExists || moduleExists) {
+    return sendError(res, 'This course has lessons, modules, or enrollment records. Archive it instead to preserve learning data.', 409);
   }
 
   await course.deleteOne();
@@ -186,21 +238,25 @@ const getCourseLessons = asyncHandler(async (req, res) => {
     return sendError(res, 'Course not found.', 404);
   }
 
+  let studentEnrollment = null;
   if (req.user.role === 'student') {
-    const enrollment = await Enrollment.findOne({
+    studentEnrollment = await Enrollment.findOne({
       student: req.user._id,
       course: courseId,
       status: { $in: ['active', 'completed'] },
-    }).select('_id');
-    if (!enrollment) {
+    });
+    if (!studentEnrollment) {
       return sendError(res, 'Access denied. You are not enrolled in this course.', 403);
     }
   }
 
   const lessonFilter = { course: courseId };
   if (req.user.role === 'student') lessonFilter.isPublished = true;
-  const lessons = await Lesson.find(lessonFilter).sort({ order: 1 });
-  return sendSuccess(res, 'Lessons fetched successfully.', lessons);
+  const lessons = await Lesson.find(lessonFilter).sort({ order: 1, _id: 1 }).lean();
+  const visibleLessons = req.user.role === 'student'
+    ? await buildStudentLessonView(lessons, studentEnrollment, req.user._id)
+    : lessons;
+  return sendSuccess(res, 'Lessons fetched successfully.', visibleLessons);
 });
 
 const getCourseEnrollmentStatus = asyncHandler(async (req, res) => {
@@ -222,6 +278,7 @@ module.exports = {
   getCourseById,
   createCourse,
   updateCourse,
+  updateCourseFinalProject,
   deleteCourse,
   getCourseLessons,
   getCourseEnrollmentStatus,

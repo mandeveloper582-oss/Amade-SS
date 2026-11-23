@@ -184,7 +184,7 @@ function AdminContentManager({ kind }) {
     const payload = new FormData();
     payload.append("image", file);
     try {
-      const { data } = await api.post("/uploads", payload, { headers: { "Content-Type": "multipart/form-data" } });
+      const { data } = await api.post("/uploads/image", payload, { headers: { "Content-Type": "multipart/form-data" } });
       updateField(fieldName, data.data.url);
     } catch (requestError) {
       setFormError(requestError.response?.data?.message || "Image upload failed. Check the image type and size.");

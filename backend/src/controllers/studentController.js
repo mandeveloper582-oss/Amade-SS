@@ -2,9 +2,12 @@ const mongoose = require('mongoose');
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
 const Lesson = require('../models/Lesson');
+const Quiz = require('../models/Quiz');
+const QuizAttempt = require('../models/QuizAttempt');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+const { buildStudentLessonView, isLessonUnlocked } = require('../utils/lessonAccess');
 
 const getProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id).select('-password');
@@ -73,8 +76,12 @@ const getCourseLessons = asyncHandler(async (req, res) => {
     return sendError(res, 'Access denied. You are not enrolled in this course.', 403);
   }
 
-  const lessons = await Lesson.find({ course: courseId, isPublished: true }).sort({ order: 1 });
-  return sendSuccess(res, 'Course lessons fetched successfully.', lessons);
+  const lessons = await Lesson.find({ course: courseId, isPublished: true })
+    .sort({ order: 1, _id: 1 })
+    .lean();
+  const enrichedLessons = await buildStudentLessonView(lessons, enrollment, req.user._id);
+
+  return sendSuccess(res, 'Course lessons fetched successfully.', enrichedLessons);
 });
 
 const getProgress = asyncHandler(async (req, res) => {
@@ -124,6 +131,21 @@ const markLessonComplete = asyncHandler(async (req, res) => {
   });
   if (!enrollment) {
     return sendError(res, 'You are not enrolled in this course.', 403);
+  }
+  if (!(await isLessonUnlocked(lesson, enrollment))) {
+    return sendError(res, 'Complete the previous lesson before accessing this lesson.', 403);
+  }
+
+  const quiz = await Quiz.findOne({ lesson: lessonId });
+  if (quiz) {
+    const passedAttempt = await QuizAttempt.exists({
+      lesson: lessonId,
+      student: req.user._id,
+      passed: true,
+    });
+    if (!passedAttempt) {
+      return sendError(res, 'You must pass the lesson quiz before marking this lesson complete.', 403);
+    }
   }
 
   const completed = new Set(enrollment.completedLessons.map((id) => id.toString()));

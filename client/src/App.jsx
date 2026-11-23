@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminCourses from "./pages/AdminCourses";
+import AdminCourseContent from "./pages/AdminCourseContent";
 import AdminStudents from "./pages/AdminStudents";
 import AdminEnrollments from "./pages/AdminEnrollments";
 import AdminContentManager from "./pages/AdminContentManager";
@@ -24,6 +25,8 @@ import StudentLogin from "./pages/StudentLogin";
 import StudentRegister from "./pages/StudentRegister";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentCourses from "./pages/StudentCourses";
+import StudentCertificate from "./pages/StudentCertificate";
+import CertificateVerify from "./pages/CertificateVerify";
 import StudentProfile from "./pages/StudentProfile";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { StudentAuthProvider } from "./context/StudentAuthContext";
@@ -39,6 +42,7 @@ function App() {
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/courses" element={<AdminCourses />} />
+              <Route path="/admin/courses/:courseId/content" element={<AdminCourseContent />} />
               <Route path="/admin/students" element={<AdminStudents />} />
               <Route path="/admin/enrollments" element={<AdminEnrollments />} />
               <Route path="/admin/projects" element={<AdminContentManager kind="projects" />} />
@@ -50,6 +54,7 @@ function App() {
               <Route path="/student/register" element={<StudentRegister />} />
               <Route path="/student/dashboard" element={<StudentDashboard />} />
               <Route path="/student/courses" element={<StudentCourses />} />
+              <Route path="/student/courses/:courseId/certificate" element={<StudentCertificate />} />
               <Route path="/student/profile" element={<StudentProfile />} />
 
               <Route element={<MainLayout />}>
@@ -58,6 +63,7 @@ function App() {
                 <Route path="/services" element={<Services />} />
                 <Route path="/academy" element={<Academy />} />
                 <Route path="/academy/:id" element={<CourseDetails />} />
+                <Route path="/certificate/verify/:certificateNumber" element={<CertificateVerify />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetails />} />
                 <Route path="/blog" element={<Blog />} />

@@ -5,6 +5,7 @@ const {
   getCourseById,
   createCourse,
   updateCourse,
+  updateCourseFinalProject,
   deleteCourse,
   getCourseLessons,
   getCourseEnrollmentStatus,
@@ -17,6 +18,8 @@ const { courseValidator } = require('../validators/courseValidator');
 const router = express.Router();
 
 router.get('/admin', protect, authorize('admin', 'super_admin'), getAdminCourses);
+router.get('/admin/:id', protect, authorize('admin', 'super_admin', 'instructor'), getCourseById);
+router.put('/admin/:id/final-project', protect, authorize('admin', 'super_admin', 'instructor'), updateCourseFinalProject);
 router.get('/', getCourses);
 router.get('/:courseId/lessons', protect, authorize('student', 'admin', 'super_admin', 'instructor'), getCourseLessons);
 router.get('/lessons', protect, authorize('student', 'admin', 'super_admin', 'instructor'), getCourseLessons);

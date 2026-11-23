@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock3, Layers3, Sparkles } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock3, Layers3, LockKeyhole, Sparkles } from "lucide-react";
 import { courses as publicCourses } from "../data/courses";
 import { useStudentAuth } from "../context/studentAuthContextValue";
-import api from "../services/api";
+import api, { resolveMediaUrl } from "../services/api";
 
 function CourseDetails() {
   const { id } = useParams();
@@ -206,6 +206,7 @@ function CourseDetails() {
         && current?.revision === learningRevision
         ? { ...current, enrollment: data.data }
         : current);
+      setLearningRevision((revision) => revision + 1);
     } catch (requestError) {
       setLearningActionError(requestError.response?.data?.message || "Lesson progress could not be saved. Please try again.");
     } finally {
@@ -246,7 +247,7 @@ function CourseDetails() {
         </Link>
 
         <div className="mt-8 overflow-hidden rounded-4xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
-          {course.thumbnail && <img src={course.thumbnail} alt="" className="h-64 w-full object-cover sm:h-96" />}
+          {course.thumbnail && <img src={resolveMediaUrl(course.thumbnail)} alt="" className="h-64 w-full object-cover sm:h-96" />}
           <div className="p-6 sm:p-8 lg:p-10">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -329,33 +330,70 @@ function CourseDetails() {
                       <ol className="mt-5 space-y-4">
                         {currentLearning.lessons.map((lesson, index) => {
                           const isCompleted = currentLearning.enrollment.completedLessons?.some((lessonId) => String(lessonId) === lesson._id);
+                          const isLocked = lesson.isLocked === true;
                           return (
                             <li key={lesson._id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900/50">
                               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
                                   <p className="text-xs font-bold uppercase tracking-[0.15em] text-green-700 dark:text-green-400">Lesson {index + 1}</p>
+                                  {lesson.moduleTitle && <p className="mt-1 text-xs font-semibold text-slate-500">{lesson.moduleTitle}</p>}
                                   <h3 className="mt-1 text-lg font-bold text-slate-950 dark:text-white">{lesson.title}</h3>
                                   {lesson.description && <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{lesson.description}</p>}
                                 </div>
                                 <button
                                   type="button"
                                   onClick={() => handleLessonComplete(lesson._id)}
-                                  disabled={isCompleted || completingLessonId !== null}
-                                  className="shrink-0 rounded-xl border border-green-600 px-4 py-2 text-sm font-bold text-green-700 disabled:cursor-default disabled:opacity-60 dark:text-green-400"
+                                  disabled={isCompleted || isLocked || completingLessonId !== null}
+                                  className={`shrink-0 rounded-xl border px-4 py-2 text-sm font-bold disabled:cursor-default disabled:opacity-60 ${
+                                    isLocked
+                                      ? "border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400"
+                                      : "border-green-600 text-green-700 dark:text-green-400"
+                                  }`}
                                 >
-                                  {isCompleted ? "Completed" : completingLessonId === lesson._id ? "Saving..." : "Mark complete"}
+                                  {isCompleted ? "Completed" : isLocked ? "Locked" : completingLessonId === lesson._id ? "Saving..." : "Mark complete"}
                                 </button>
                               </div>
-                              {lesson.content && <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-700 dark:text-slate-300">{lesson.content}</p>}
-                              {lesson.videoUrl && <a href={lesson.videoUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex text-sm font-semibold text-blue-700 underline dark:text-blue-400">Open lesson video</a>}
-                              {lesson.resources?.length > 0 && (
-                                <ul className="mt-4 flex flex-wrap gap-3">
-                                  {lesson.resources.map((resource, resourceIndex) => (
-                                    <li key={`${lesson._id}-${resourceIndex}`}>
-                                      <a href={resource} target="_blank" rel="noreferrer" className="text-sm font-semibold text-blue-700 underline dark:text-blue-400">Resource {resourceIndex + 1}</a>
-                                    </li>
-                                  ))}
-                                </ul>
+                              {isLocked ? (
+                                <p className="mt-4 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                                  <LockKeyhole aria-hidden="true" size={16} />
+                                  Complete the previous lesson to unlock this lesson.
+                                </p>
+                              ) : (
+                                <>
+                                  {(lesson.englishContent || lesson.content) && (
+                                    <section className="mt-4 rounded-xl bg-white p-4 dark:bg-slate-950">
+                                      <h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">Lesson</h4>
+                                      <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-700 dark:text-slate-300">{lesson.englishContent || lesson.content}</p>
+                                    </section>
+                                  )}
+                                  {lesson.codeExamples && (
+                                    <pre className="mt-4 overflow-x-auto rounded-xl bg-slate-950 p-4 text-sm leading-6 text-green-200"><code>{lesson.codeExamples}</code></pre>
+                                  )}
+                                  {lesson.exercises && (
+                                    <section className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+                                      <h4 className="font-bold text-blue-900 dark:text-blue-200">Practical exercise</h4>
+                                      <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-blue-900 dark:text-blue-100">{lesson.exercises}</p>
+                                    </section>
+                                  )}
+                                  {lesson.oromoSummary && (
+                                    <section lang="om" className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/30">
+                                      <h4 className="font-bold text-green-900 dark:text-green-200">Cuunfaa Barnootaa — Afaan Oromoo</h4>
+                                      <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-green-900 dark:text-green-100">{lesson.oromoSummary}</p>
+                                    </section>
+                                  )}
+                                  {lesson.pdfUrl && <LessonPdf url={lesson.pdfUrl} />}
+                                  {lesson.quiz && <LessonQuiz lessonId={lesson._id} quiz={lesson.quiz} lastAttempt={lesson.lastQuizAttempt} onPassed={() => setLearningRevision((revision) => revision + 1)} />}
+                                  {lesson.videoUrl && <a href={lesson.videoUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex text-sm font-semibold text-blue-700 underline dark:text-blue-400">Open lesson video</a>}
+                                  {lesson.resources?.length > 0 && (
+                                    <ul className="mt-4 flex flex-wrap gap-3">
+                                      {lesson.resources.map((resource, resourceIndex) => (
+                                        <li key={`${lesson._id}-${resourceIndex}`}>
+                                          <a href={resource} target="_blank" rel="noreferrer" className="text-sm font-semibold text-blue-700 underline dark:text-blue-400">Resource {resourceIndex + 1}</a>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </>
                               )}
                             </li>
                           );
@@ -368,9 +406,213 @@ function CourseDetails() {
                 )}
               </section>
             )}
+            {isDatabaseCourse && user && currentLearning?.enrollment && (
+              <CourseFinalProject courseId={course._id} />
+            )}
           </div>
         </div>
       </div>
+    </section>
+  );
+}
+
+function CourseFinalProject({ courseId }) {
+  const [projectData, setProjectData] = useState(null);
+  const [summary, setSummary] = useState("");
+  const [repositoryUrl, setRepositoryUrl] = useState("");
+  const [demoUrl, setDemoUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await api.get(`/final-projects/courses/${courseId}`, { authTokenKey: "amade_student_token" });
+        if (!active) return;
+        const data = response.data.data;
+        setProjectData(data);
+        setSummary(data.submission?.summary || "");
+        setRepositoryUrl(data.submission?.repositoryUrl || "");
+        setDemoUrl(data.submission?.demoUrl || "");
+      } catch (requestError) {
+        if (active) setError(requestError.response?.data?.message || "Final project could not be loaded.");
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }, 0);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [courseId]);
+
+  const submitProject = async (event) => {
+    event.preventDefault();
+    if (!repositoryUrl.trim() && !demoUrl.trim()) {
+      setError("Add a repository or live demo link before submitting.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await api.put(`/final-projects/courses/${courseId}`, {
+        summary,
+        repositoryUrl,
+        demoUrl,
+      }, { authTokenKey: "amade_student_token" });
+      setProjectData((current) => ({ ...current, submission: response.data.data }));
+      setNotice("Your final project was submitted.");
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Final project submission failed.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) return <p role="status" className="mt-8 text-sm text-slate-500">Loading final project...</p>;
+  if (error && !projectData) return <p role="alert" className="mt-8 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-200">{error}</p>;
+  if (!projectData?.finalProject) return null;
+
+  const submission = projectData.submission;
+
+  return (
+    <section className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900/50">
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-700 dark:text-green-400">Optional capstone</p>
+      <h2 className="mt-1 text-xl font-black">{projectData.finalProject.title}</h2>
+      {projectData.finalProject.instructions && <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-600 dark:text-slate-300">{projectData.finalProject.instructions}</p>}
+      {projectData.finalProject.requirements?.length > 0 && (
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
+          {projectData.finalProject.requirements.map((requirement, index) => <li key={`project-requirement-${index}`}>{requirement}</li>)}
+        </ul>
+      )}
+      {submission && (
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-950">
+          <p className="font-bold">Review status: <span className="capitalize">{submission.status.replace("_", " ")}</span></p>
+          {submission.feedback && <p className="mt-2 whitespace-pre-wrap text-slate-600 dark:text-slate-300">Instructor feedback: {submission.feedback}</p>}
+        </div>
+      )}
+      {error && <p role="alert" className="mt-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
+      {notice && <p role="status" className="mt-3 text-sm font-semibold text-green-700 dark:text-green-300">{notice}</p>}
+      <form onSubmit={submitProject} className="mt-4 grid gap-3">
+        <label className="text-sm font-semibold">Project summary<textarea required minLength={1} maxLength={5000} rows={5} value={summary} onChange={(event) => setSummary(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal dark:border-slate-700 dark:bg-slate-950" /></label>
+        <label className="text-sm font-semibold">Repository URL (HTTPS)<input type="url" maxLength={2000} value={repositoryUrl} onChange={(event) => setRepositoryUrl(event.target.value)} placeholder="https://github.com/..." className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal dark:border-slate-700 dark:bg-slate-950" /></label>
+        <label className="text-sm font-semibold">Live demo URL (HTTPS)<input type="url" maxLength={2000} value={demoUrl} onChange={(event) => setDemoUrl(event.target.value)} placeholder="https://..." className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal dark:border-slate-700 dark:bg-slate-950" /></label>
+        <button type="submit" disabled={isSubmitting} className="w-fit rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60 dark:bg-green-500 dark:text-slate-950">
+          {isSubmitting ? "Submitting..." : submission ? "Update submission" : "Submit final project"}
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function LessonPdf({ url }) {
+  const [pdfState, setPdfState] = useState({ url: "", objectUrl: "", error: "" });
+  const currentPdfState = pdfState.url === url ? pdfState : { objectUrl: "", error: "" };
+
+  useEffect(() => {
+    let active = true;
+    let currentObjectUrl = "";
+
+    api.get(url, { responseType: "blob", authTokenKey: "amade_student_token" })
+      .then(({ data }) => {
+        if (!active) return;
+        currentObjectUrl = URL.createObjectURL(data);
+        setPdfState({ url, objectUrl: currentObjectUrl, error: "" });
+      })
+      .catch((requestError) => {
+        if (active) {
+          setPdfState({
+            url,
+            objectUrl: "",
+            error: requestError.response?.data?.message || "PDF material could not be loaded.",
+          });
+        }
+      });
+
+    return () => {
+      active = false;
+      if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+    };
+  }, [url]);
+
+  if (currentPdfState.error) return <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-200">{currentPdfState.error}</p>;
+  if (!currentPdfState.objectUrl) return <p className="mt-4 text-sm text-slate-500">Loading secure PDF material...</p>;
+
+  return (
+    <section className="mt-5">
+      <h4 className="mb-2 font-bold">Lesson PDF</h4>
+      <iframe src={`${currentPdfState.objectUrl}#toolbar=0`} title="Lesson PDF material" className="h-[32rem] w-full rounded-xl border border-slate-200 dark:border-slate-700" />
+      <p className="mt-2 text-xs text-slate-500">The viewer hides ordinary toolbar controls where supported, but cannot prevent downloads, screenshots, screen recording, or copying.</p>
+    </section>
+  );
+}
+
+function LessonQuiz({ lessonId, quiz, lastAttempt, onPassed }) {
+  const [answers, setAnswers] = useState({});
+  const [result, setResult] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async (event) => {
+    event.preventDefault();
+    const complete = quiz.questions.every((question) => answers[question._id] !== undefined);
+    if (!complete) {
+      setError("Answer every question before submitting.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError("");
+    try {
+      const { data } = await api.post(
+        `/quizzes/${lessonId}/submit`,
+        { answers: quiz.questions.map((question) => ({ questionId: question._id, selectedIndex: answers[question._id] })) },
+        { authTokenKey: "amade_student_token" },
+      );
+      setResult(data.data);
+      if (data.data.passed) onPassed();
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Quiz submission failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!quiz.questions?.length) return null;
+
+  return (
+    <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-950">
+      <h4 className="text-lg font-extrabold">{quiz.title || "Lesson quiz"}</h4>
+      {quiz.instructions && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{quiz.instructions}</p>}
+      {error && <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-200">{error}</p>}
+      {result && (
+        <p role="status" className={`mt-3 rounded-lg px-3 py-2 text-sm font-semibold ${result.passed ? "bg-green-50 text-green-800 dark:bg-green-950/40 dark:text-green-200" : "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"}`}>
+          {result.passed ? "Quiz passed" : "Not passed yet"} — {result.points}/{result.maxScore} ({result.score}%, pass mark: {result.passScore}%)
+        </p>
+      )}
+      {!result && lastAttempt && (
+        <p className="mt-3 text-xs text-slate-500">Latest attempt: {lastAttempt.score}% · {lastAttempt.passed ? "Passed" : "Not passed"}</p>
+      )}
+      <form onSubmit={submit} className="mt-4 space-y-5">
+        {quiz.questions.map((question, index) => (
+          <fieldset key={question._id} className="space-y-2">
+            <legend className="font-semibold">{index + 1}. {question.prompt}</legend>
+            {question.options.map((option, optionIndex) => (
+              <label key={`${question._id}-${optionIndex}`} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                <input type="radio" name={`quiz-${lessonId}-${question._id}`} value={optionIndex} checked={answers[question._id] === optionIndex} onChange={() => setAnswers((current) => ({ ...current, [question._id]: optionIndex }))} className="mt-1 accent-green-600" />
+                <span>{option}</span>
+              </label>
+            ))}
+          </fieldset>
+        ))}
+        <button type="submit" disabled={isSubmitting} className="rounded-xl bg-green-500 px-4 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-60">{isSubmitting ? "Submitting..." : "Submit quiz"}</button>
+      </form>
     </section>
   );
 }

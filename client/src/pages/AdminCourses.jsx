@@ -4,7 +4,7 @@ import {
   ArrowLeft, BookOpen, ChevronLeft, ChevronRight, LogOut, Plus, Search, ShieldCheck,
 } from "lucide-react";
 import { useAdminAuth } from "../context/adminAuthContextValue";
-import api from "../services/api";
+import api, { resolveMediaUrl } from "../services/api";
 
 const emptyCourse = {
   title: "",
@@ -15,6 +15,8 @@ const emptyCourse = {
   duration: "4 weeks",
   level: "Beginner",
   technologies: "",
+  learningObjectives: "",
+  prerequisites: "",
   price: "0",
   isPublished: false,
 };
@@ -31,6 +33,7 @@ function AdminCourses() {
   const [form, setForm] = useState(null);
   const [editingCourse, setEditingCourse] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [formError, setFormError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -95,6 +98,8 @@ function AdminCourses() {
       duration: course.duration || "",
       level: course.level || "",
       technologies: (course.technologies || []).join(", "),
+      learningObjectives: (course.learningObjectives || []).join("\n"),
+      prerequisites: (course.prerequisites || []).join("\n"),
       price: String(course.price ?? 0),
       isPublished: Boolean(course.isPublished),
     });
@@ -116,6 +121,8 @@ function AdminCourses() {
       ...form,
       price: Number(form.price),
       technologies: form.technologies.split(",").map((technology) => technology.trim()).filter(Boolean),
+      learningObjectives: form.learningObjectives.split("\n").map((objective) => objective.trim()).filter(Boolean),
+      prerequisites: form.prerequisites.split("\n").map((prerequisite) => prerequisite.trim()).filter(Boolean),
       isPublished: form.status === "published" && form.isPublished,
     };
 
@@ -131,6 +138,28 @@ function AdminCourses() {
       setFormError(requestError.response?.data?.message || "Course could not be saved. Please check the fields and try again.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleThumbnailUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const payload = new FormData();
+    payload.append("image", file);
+    setIsUploadingThumbnail(true);
+    setFormError("");
+    try {
+      const { data } = await api.post("/uploads/image", payload, {
+        authTokenKey: "amade_admin_token",
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setForm((current) => current ? { ...current, thumbnail: data.data.url } : current);
+    } catch (requestError) {
+      setFormError(requestError.response?.data?.message || "Thumbnail could not be uploaded.");
+    } finally {
+      setIsUploadingThumbnail(false);
+      event.target.value = "";
     }
   };
 
@@ -192,9 +221,16 @@ function AdminCourses() {
               <label className="block text-sm font-semibold">Category
                 <input value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-normal dark:border-slate-700 dark:bg-slate-950" />
               </label>
-              <label className="block text-sm font-semibold">Thumbnail URL
-                <input type="url" value={form.thumbnail} onChange={(event) => setForm({ ...form, thumbnail: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-normal dark:border-slate-700 dark:bg-slate-950" />
-              </label>
+              <div className="space-y-3 text-sm font-semibold">
+                <label className="block">Thumbnail URL
+                  <input type="url" value={form.thumbnail} onChange={(event) => setForm({ ...form, thumbnail: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-normal dark:border-slate-700 dark:bg-slate-950" />
+                </label>
+                <label className="block">Or upload an image (JPG, PNG, or WEBP; up to 5 MB)
+                  <input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" disabled={isUploadingThumbnail} onChange={handleThumbnailUpload} className="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:font-semibold dark:border-slate-700 dark:bg-slate-950 dark:file:bg-slate-800" />
+                </label>
+                {isUploadingThumbnail && <p role="status" className="text-xs text-slate-500">Uploading thumbnail...</p>}
+                {form.thumbnail && <img src={resolveMediaUrl(form.thumbnail)} alt="Course thumbnail preview" className="h-36 w-full rounded-xl object-cover" />}
+              </div>
               <label className="block text-sm font-semibold">Duration
                 <input value={form.duration} onChange={(event) => setForm({ ...form, duration: event.target.value })} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-normal dark:border-slate-700 dark:bg-slate-950" />
               </label>
@@ -218,12 +254,18 @@ function AdminCourses() {
               <label className="block text-sm font-semibold sm:col-span-2">Description
                 <textarea required rows="4" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="mt-2 w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-normal dark:border-slate-700 dark:bg-slate-950" />
               </label>
+              <label className="block text-sm font-semibold">Learning objectives (one per line)
+                <textarea rows="4" value={form.learningObjectives} onChange={(event) => setForm({ ...form, learningObjectives: event.target.value })} className="mt-2 w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-normal dark:border-slate-700 dark:bg-slate-950" />
+              </label>
+              <label className="block text-sm font-semibold">Prerequisites (one per line)
+                <textarea rows="4" value={form.prerequisites} onChange={(event) => setForm({ ...form, prerequisites: event.target.value })} className="mt-2 w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-normal dark:border-slate-700 dark:bg-slate-950" />
+              </label>
               <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-2">
                 <input type="checkbox" checked={form.isPublished} disabled={form.status !== "published"} onChange={(event) => setForm({ ...form, isPublished: event.target.checked })} className="size-4 accent-green-600" />
                 Publicly visible on the Academy
               </label>
               <div className="flex flex-wrap gap-3 sm:col-span-2">
-                <button type="submit" disabled={isSaving} className="rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-green-500 dark:text-slate-950">{isSaving ? "Saving..." : editingCourse ? "Save changes" : "Create course"}</button>
+                <button type="submit" disabled={isSaving || isUploadingThumbnail} className="rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-green-500 dark:text-slate-950">{isSaving ? "Saving..." : editingCourse ? "Save changes" : "Create course"}</button>
                 <button type="button" onClick={closeForm} className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold dark:border-slate-700">Cancel</button>
               </div>
             </form>
@@ -263,7 +305,7 @@ function AdminCourses() {
                     <td className="px-5 py-4">{course.category || "General"}</td>
                     <td className="px-5 py-4 tabular-nums">{course.price ? `$${course.price}` : "Free"}</td>
                     <td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${course.isPublished ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{course.isPublished ? "Public" : course.status.replace("_", " ")}</span></td>
-                    <td className="px-5 py-4"><button onClick={() => startEdit(course)} className="font-bold text-blue-700 hover:underline dark:text-blue-300">Edit</button></td>
+                    <td className="px-5 py-4"><div className="flex gap-3"><button onClick={() => startEdit(course)} className="font-bold text-blue-700 hover:underline dark:text-blue-300">Edit</button><Link to={`/admin/courses/${course._id}/content`} className="font-bold text-green-700 hover:underline dark:text-green-300">Content</Link></div></td>
                   </tr>
                 ))}
               </tbody>

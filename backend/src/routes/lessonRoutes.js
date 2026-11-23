@@ -4,8 +4,8 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.get('/', getLessons);
-router.get('/:id', getLessonById);
+router.get('/', protect, authorize('admin', 'super_admin', 'instructor'), getLessons);
+router.get('/:id', protect, authorize('student', 'admin', 'super_admin', 'instructor'), getLessonById);
 router.post('/', protect, authorize('admin', 'super_admin', 'instructor'), createLesson);
 router.put('/:id', protect, authorize('admin', 'super_admin', 'instructor'), updateLesson);
 router.delete('/:id', protect, authorize('admin', 'super_admin', 'instructor'), deleteLesson);

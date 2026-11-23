@@ -203,6 +203,13 @@ const updateEnrollmentProgress = asyncHandler(async (req, res) => {
   }
 
   const { completedLessons } = req.body;
+  if (
+    req.user.role === 'student'
+    && Object.prototype.hasOwnProperty.call(req.body || {}, 'completedLessons')
+  ) {
+    return sendError(res, 'Complete lessons through the lesson learning flow.', 403);
+  }
+
   if (Array.isArray(completedLessons)) {
     const uniqueLessonIds = [...new Set(completedLessons.map((id) => id.toString()))];
     if (uniqueLessonIds.some((id) => !mongoose.isValidObjectId(id))) {

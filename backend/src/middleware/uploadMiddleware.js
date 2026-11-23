@@ -1,42 +1,65 @@
 const fs = require('fs');
 const path = require('path');
+const { randomUUID } = require('crypto');
 const multer = require('multer');
 
 const uploadDir = path.join(__dirname, '../../uploads');
+const privatePdfDir = path.join(__dirname, '../../private-pdfs');
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+fs.mkdirSync(uploadDir, { recursive: true });
+fs.mkdirSync(privatePdfDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     cb(null, uploadDir);
   },
   filename: (_req, file, cb) => {
-    const safeName = `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
+    const extension = path.extname(file.originalname).toLowerCase();
+    const safeName = `${randomUUID()}${extension}`;
     cb(null, safeName);
   },
 });
 
-const allowedMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const allowedExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+const privatePdfStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, privatePdfDir);
+  },
+  filename: (_req, _file, cb) => {
+    cb(null, `${randomUUID()}.pdf`);
+  },
+});
 
-const fileFilter = (_req, file, cb) => {
-  const extension = path.extname(file.originalname).toLowerCase();
+const imageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const imageExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+const pdfMimeTypes = new Set(['application/pdf']);
+const pdfExtensions = new Set(['.pdf']);
 
-  if (!allowedMimeTypes.has(file.mimetype) || !allowedExtensions.has(extension)) {
-    return cb(new Error('Only JPG, JPEG, PNG, and WEBP images are allowed.'), false);
-  }
+const buildValidator = (allowedMimeTypes, allowedExtensions, errorMessage) => ({
+  fileFilter: (_req, file, cb) => {
+    const extension = path.extname(file.originalname).toLowerCase();
 
-  cb(null, true);
-};
+    if (!allowedMimeTypes.has(file.mimetype) || !allowedExtensions.has(extension)) {
+      return cb(new Error(errorMessage), false);
+    }
 
-const upload = multer({
+    cb(null, true);
+  },
+});
+
+const imageUpload = multer({
   storage,
-  fileFilter,
+  fileFilter: buildValidator(imageMimeTypes, imageExtensions, 'Only JPG, JPEG, PNG, and WEBP images are allowed.').fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
 });
 
-module.exports = upload;
+const pdfUpload = multer({
+  storage: privatePdfStorage,
+  fileFilter: buildValidator(pdfMimeTypes, pdfExtensions, 'Only PDF files are allowed.').fileFilter,
+  limits: {
+    fileSize: 20 * 1024 * 1024,
+  },
+});
+
+module.exports = { imageUpload, pdfUpload, privatePdfDir };
