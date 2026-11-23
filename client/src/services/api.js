@@ -2,13 +2,56 @@
 
 const ADMIN_TOKEN_KEY = "amade_admin_token";
 const STUDENT_TOKEN_KEY = "amade_student_token";
+
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, "");
+
 const defaultApiUrl = import.meta.env.PROD
   ? "https://amade-software-0epp.onrender.com/api"
   : "http://localhost:5000/api";
+
 const apiBaseUrl = configuredApiUrl
-  ? /\/api$/i.test(configuredApiUrl) ? configuredApiUrl : `${configuredApiUrl}/api`
+  ? /\/api$/i.test(configuredApiUrl)
+    ? configuredApiUrl
+    : `${configuredApiUrl}/api`
   : defaultApiUrl;
+
+const api = axios.create({
+  baseURL: apiBaseUrl,
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Resolve image and media URLs
+export const resolveMediaUrl = (mediaPath) => {
+  if (!mediaPath) return "";
+
+  const path = String(mediaPath).trim();
+
+  if (!path) return "";
+
+  // Keep absolute URLs unchanged
+  if (/^(https?:)?\/\//i.test(path)) {
+    return path;
+  }
+
+  if (/^(data|blob):/i.test(path)) {
+    return path;
+  }
+
+  try {
+    const backendOrigin = new URL(apiBaseUrl).origin;
+
+    return new URL(
+      path.startsWith("/") ? path : `${path}`,
+      backendOrigin
+    ).href;
+  } catch (error) {
+    console.error("Media URL error:", error);
+    return path;
+  }
+};
 
 const getTokenKeyForCurrentRoute = () => {
   if (typeof window === "undefined") return null;
@@ -26,14 +69,6 @@ const getTokenKeyForCurrentRoute = () => {
   return null;
 };
 
-const api = axios.create({
-  baseURL: apiBaseUrl,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
 export const getApiErrorMessage = (error) => {
   const status = error.response?.status;
   const responseMessage = error.response?.data?.message;
@@ -41,18 +76,23 @@ export const getApiErrorMessage = (error) => {
   if (!error.isAxiosError) {
     return error.message || "Unable to sign in. Please try again.";
   }
+
   if (status === 401) {
     return responseMessage || "The email or password is incorrect.";
   }
+
   if (status === 404) {
     return "The API endpoint was not found. Check that VITE_API_URL points to the backend API ending in /api.";
   }
+
   if (status >= 500) {
     return "The backend could not complete the request. Please try again later.";
   }
+
   if (status) {
     return responseMessage || `The request failed with HTTP ${status}.`;
   }
+
   if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
     return "The backend request timed out. Please try again.";
   }
@@ -61,13 +101,22 @@ export const getApiErrorMessage = (error) => {
 };
 
 api.interceptors.request.use((config) => {
-  const isPublicAuthRequest = /\/auth\/(login|register)\/?$/.test(config.url || "");
-  const tokenKey = isPublicAuthRequest ? null : config.authTokenKey || getTokenKeyForCurrentRoute();
-  const token = tokenKey && window.sessionStorage.getItem(tokenKey);
+  const isPublicAuthRequest = /\/auth\/(login|register)\/?$/.test(
+    config.url || ""
+  );
+
+  const tokenKey = isPublicAuthRequest
+    ? null
+    : config.authTokenKey || getTokenKeyForCurrentRoute();
+
+  const token =
+    tokenKey && typeof window !== "undefined"
+      ? window.sessionStorage.getItem(tokenKey)
+      : null;
 
   if (token) {
     config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `Bearer '${token}`;
     config.authTokenKey = tokenKey;
   }
 
@@ -78,12 +127,23 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const tokenKey = error.config?.authTokenKey;
-    if (error.response?.status === 401 && tokenKey) {
+
+    if (
+      error.response?.status === 401 &&
+      tokenKey &&
+      typeof window !== "undefined"
+    ) {
       window.sessionStorage.removeItem(tokenKey);
-      window.dispatchEvent(new CustomEvent("amade:auth-expired", { detail: { tokenKey } }));
+
+      window.dispatchEvent(
+        new CustomEvent("amade:auth-expired", {
+          detail: { tokenKey },
+        })
+      );
     }
+
     return Promise.reject(error);
-  },
+  }
 );
 
 export const getHealth = async () => {
@@ -96,7 +156,10 @@ export const submitContactMessage = async (payload) => {
     const response = await api.post("/contact", payload);
     return response.data;
   } catch (error) {
-    return { success: false, message: getApiErrorMessage(error) };
+    return {
+      success: false,
+      message: getApiErrorMessage(error),
+    };
   }
 };
 
