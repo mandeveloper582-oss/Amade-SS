@@ -2,9 +2,44 @@ const mongoose = require('mongoose');
 const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
 const Lesson = require('../models/Lesson');
+const Quiz = require('../models/Quiz');
+const QuizAttempt = require('../models/QuizAttempt');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+
+const verifyEnrollmentCompletion = async (enrollment) => {
+  const courseId = enrollment.course?._id || enrollment.course;
+  const lessons = await Lesson.find({
+    course: courseId,
+    isPublished: true,
+  }).select('_id').lean();
+
+  if (!lessons.length) return { valid: false, progress: 0 };
+
+  const completedLessonIds = new Set(enrollment.completedLessons.map(String));
+  if (lessons.some(({ _id }) => !completedLessonIds.has(String(_id)))) {
+    return { valid: false, progress: 0 };
+  }
+
+  const quizLessonIds = (await Quiz.find({
+    lesson: { $in: lessons.map(({ _id }) => _id) },
+  }).select('lesson').lean()).map(({ lesson }) => lesson);
+
+  if (quizLessonIds.length) {
+    const passedLessonIds = new Set((await QuizAttempt.distinct('lesson', {
+      student: enrollment.student,
+      lesson: { $in: quizLessonIds },
+      passed: true,
+    })).map(String));
+
+    if (quizLessonIds.some((lessonId) => !passedLessonIds.has(String(lessonId)))) {
+      return { valid: false, progress: 0 };
+    }
+  }
+
+  return { valid: true, progress: 100 };
+};
 
 const getEnrollments = asyncHandler(async (req, res) => {
   const filter = {};
@@ -164,6 +199,13 @@ const updateEnrollment = asyncHandler(async (req, res) => {
     return sendError(res, 'Enrollment not found.', 404);
   }
 
+  if (req.body.status === 'completed') {
+    const completion = await verifyEnrollmentCompletion(enrollment);
+    if (!completion.valid) {
+      return sendError(res, 'The student has not completed every published lesson and required quiz.', 409);
+    }
+  }
+
   enrollment.status = req.body.status;
   enrollment.progress = req.body.status === 'completed' ? 100 : enrollment.progress;
   enrollment.completedAt = req.body.status === 'completed' ? (enrollment.completedAt || new Date()) : null;
@@ -182,6 +224,13 @@ const updateAdminEnrollmentStatus = asyncHandler(async (req, res) => {
   const enrollment = await Enrollment.findById(req.params.id);
   if (!enrollment) {
     return sendError(res, 'Enrollment not found.', 404);
+  }
+
+  if (req.body.status === 'completed') {
+    const completion = await verifyEnrollmentCompletion(enrollment);
+    if (!completion.valid) {
+      return sendError(res, 'The student has not completed every published lesson and required quiz.', 409);
+    }
   }
 
   enrollment.status = req.body.status;
@@ -229,7 +278,18 @@ const updateEnrollmentProgress = asyncHandler(async (req, res) => {
   const totalLessons = await Lesson.countDocuments({ course: enrollment.course._id, isPublished: true });
   const completionRate = totalLessons > 0 ? (enrollment.completedLessons.length / totalLessons) * 100 : 0;
   enrollment.progress = Math.min(100, Math.round(completionRate));
-  enrollment.status = enrollment.progress >= 100 ? 'completed' : 'active';
+
+  if (enrollment.progress >= 100) {
+    const completion = await verifyEnrollmentCompletion(enrollment);
+    if (completion.valid) {
+      enrollment.status = 'completed';
+    } else {
+      enrollment.progress = Math.min(99, enrollment.progress);
+      enrollment.status = 'active';
+    }
+  } else {
+    enrollment.status = 'active';
+  }
 
   if (enrollment.status === 'completed') {
     enrollment.completedAt = new Date();

@@ -120,6 +120,10 @@ test('lesson progress requires the student learning flow and passing quiz eviden
   const hiddenLesson = lockedLessons.json.data.find(({ _id }) => _id === String(secondLesson._id));
   assert.equal(hiddenLesson.isLocked, true);
   assert.equal(hiddenLesson.content, undefined);
+  assert.equal(hiddenLesson.englishContent, undefined);
+  assert.equal(hiddenLesson.introduction, undefined);
+  assert.equal(hiddenLesson.stepByStep, undefined);
+  assert.equal(hiddenLesson.oromoSummary, undefined);
 
   const bypassProgress = await request('PUT', `/enrollments/${enrollment._id}/progress`, {
     completedLessons: [String(firstLesson._id), String(secondLesson._id)],
@@ -145,4 +149,12 @@ test('lesson progress requires the student learning flow and passing quiz eviden
   assert.equal(completed.status, 200);
   assert.equal(completed.json.data.progress, 100);
   assert.equal(completed.json.data.status, 'completed');
+
+  const certificateRequest = await request('POST', `/students/courses/${course._id}/certificate`, {});
+  assert.equal(certificateRequest.status, 202);
+  assert.equal(certificateRequest.json.data.status, 'pending');
+
+  const certificateStatus = await request('GET', `/students/courses/${course._id}/certificate/status`);
+  assert.equal(certificateStatus.status, 200);
+  assert.equal(certificateStatus.json.data.status, 'pending');
 });

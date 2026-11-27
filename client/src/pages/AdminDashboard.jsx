@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import {
-  Activity, BookOpen, BriefcaseBusiness, FileText, GraduationCap,
+  Activity, Award, BookOpen, BriefcaseBusiness, FileText, GraduationCap,
   LayoutDashboard, LogOut, Mail, RefreshCw, Settings, ShieldCheck,
   Users, Wrench,
 } from "lucide-react";
@@ -91,6 +91,7 @@ function AdminDashboard() {
           <Link to="/admin/services" className="flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"><Wrench aria-hidden="true" size={18} /> Services</Link>
           <Link to="/admin/blog" className="flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"><FileText aria-hidden="true" size={18} /> Blog posts</Link>
           <Link to="/admin/messages" className="flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"><Mail aria-hidden="true" size={18} /> Messages</Link>
+          <Link to="/admin/certificate-requests" className="flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"><Award aria-hidden="true" size={18} /> Certificates</Link>
           <a href="#activity" className="flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"><Activity aria-hidden="true" size={18} /> Recent activity</a>
           <Link to="/" className="flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"><Settings aria-hidden="true" size={18} /> View public site</Link>
         </nav>

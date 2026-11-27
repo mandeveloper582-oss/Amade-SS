@@ -158,7 +158,28 @@ const markLessonComplete = asyncHandler(async (req, res) => {
   enrollment.progress = publishedLessons.length > 0
     ? Math.min(100, Math.round((completedPublishedLessons.length / publishedLessons.length) * 100))
     : 0;
-  enrollment.status = enrollment.progress >= 100 ? 'completed' : 'active';
+
+  if (enrollment.progress >= 100) {
+    const courseQuizLessonIds = (await Quiz.find({
+      lesson: { $in: Array.from(publishedLessonIds) },
+    }).select('lesson').lean()).map(({ lesson }) => lesson);
+
+    let allQuizzesPassed = true;
+    if (courseQuizLessonIds.length) {
+      const passedLessonIds = new Set((await QuizAttempt.distinct('lesson', {
+        student: req.user._id,
+        lesson: { $in: courseQuizLessonIds },
+        passed: true,
+      })).map(String));
+      allQuizzesPassed = courseQuizLessonIds.every((quizLessonId) => (
+        passedLessonIds.has(String(quizLessonId))
+      ));
+    }
+
+    enrollment.status = allQuizzesPassed ? 'completed' : 'active';
+  } else {
+    enrollment.status = 'active';
+  }
 
   if (enrollment.status === 'completed') {
     enrollment.completedAt = new Date();

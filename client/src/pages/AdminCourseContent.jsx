@@ -10,6 +10,12 @@ const emptyLesson = {
   description: "",
   module: "",
   englishContent: "",
+  introduction: "",
+  stepByStep: "",
+  practicalExamples: "",
+  expectedOutput: "",
+  importantPoints: "",
+  estimatedMinutes: 15,
   oromoSummary: "",
   codeExamples: "",
   exercises: "",
@@ -391,10 +397,16 @@ function AdminCourseContent() {
               <label className="text-sm font-semibold">Module<select className={inputClass} value={lessonForm.module || ""} onChange={(event) => setLessonForm({ ...lessonForm, module: event.target.value })}><option value="">Uncategorized / legacy</option>{modules.map((module) => <option key={module._id} value={module._id}>{module.title}</option>)}</select></label>
               <label className="text-sm font-semibold sm:col-span-2">Short description<textarea rows={2} className={inputClass} value={lessonForm.description} onChange={(event) => setLessonForm({ ...lessonForm, description: event.target.value })} /></label>
               <label className="text-sm font-semibold sm:col-span-2">English main lesson (80%)<textarea rows={9} className={inputClass} value={lessonForm.englishContent} onChange={(event) => setLessonForm({ ...lessonForm, englishContent: event.target.value })} placeholder="Introduction, objectives, explanation, steps, and summary..." /></label>
+              <label className="text-sm font-semibold sm:col-span-2">Lesson introduction<textarea rows={3} className={inputClass} value={lessonForm.introduction} onChange={(event) => setLessonForm({ ...lessonForm, introduction: event.target.value })} /></label>
+              <label className="text-sm font-semibold sm:col-span-2">Step-by-step explanation<textarea rows={5} className={inputClass} value={lessonForm.stepByStep} onChange={(event) => setLessonForm({ ...lessonForm, stepByStep: event.target.value })} /></label>
+              <label className="text-sm font-semibold sm:col-span-2">Practical examples<textarea rows={4} className={inputClass} value={lessonForm.practicalExamples} onChange={(event) => setLessonForm({ ...lessonForm, practicalExamples: event.target.value })} /></label>
+              <label className="text-sm font-semibold sm:col-span-2">Expected output<textarea rows={4} className={`${inputClass} font-mono`} value={lessonForm.expectedOutput} onChange={(event) => setLessonForm({ ...lessonForm, expectedOutput: event.target.value })} /></label>
+              <label className="text-sm font-semibold sm:col-span-2">Important points<textarea rows={4} className={inputClass} value={lessonForm.importantPoints} onChange={(event) => setLessonForm({ ...lessonForm, importantPoints: event.target.value })} /></label>
               <label className="text-sm font-semibold sm:col-span-2">Cuunfaa Barnootaa — Afaan Oromoo (20%)<textarea rows={5} className={inputClass} value={lessonForm.oromoSummary} onChange={(event) => setLessonForm({ ...lessonForm, oromoSummary: event.target.value })} /></label>
               <label className="text-sm font-semibold sm:col-span-2">Code examples<textarea rows={5} className={`${inputClass} font-mono`} value={lessonForm.codeExamples} onChange={(event) => setLessonForm({ ...lessonForm, codeExamples: event.target.value })} /></label>
               <label className="text-sm font-semibold sm:col-span-2">Practical exercises<textarea rows={4} className={inputClass} value={lessonForm.exercises} onChange={(event) => setLessonForm({ ...lessonForm, exercises: event.target.value })} /></label>
               <label className="text-sm font-semibold">Position<input type="number" min="1" step="1" required className={inputClass} value={lessonForm.order} onChange={(event) => setLessonForm({ ...lessonForm, order: event.target.value })} /></label>
+              <label className="text-sm font-semibold">Estimated study time (minutes)<input type="number" min="1" max="1440" required className={inputClass} value={lessonForm.estimatedMinutes} onChange={(event) => setLessonForm({ ...lessonForm, estimatedMinutes: Number(event.target.value) })} /></label>
               <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={lessonForm.isPublished} onChange={(event) => setLessonForm({ ...lessonForm, isPublished: event.target.checked })} /> Publish lesson</label>
               <label className="text-sm font-semibold sm:col-span-2">PDF learning material (PDF, max 20 MB)
                 <input type="file" accept="application/pdf,.pdf" disabled={uploadingPdf} onChange={(event) => uploadPdf(event.target.files?.[0])} className={`${inputClass} file:mr-3 file:rounded-lg file:border-0 file:bg-green-100 file:px-3 file:py-1.5 file:font-semibold dark:file:bg-green-950 dark:file:text-green-200`} />

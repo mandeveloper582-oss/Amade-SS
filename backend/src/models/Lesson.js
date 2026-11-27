@@ -29,6 +29,32 @@ const lessonSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    introduction: {
+      type: String,
+      default: '',
+    },
+    stepByStep: {
+      type: String,
+      default: '',
+    },
+    practicalExamples: {
+      type: String,
+      default: '',
+    },
+    expectedOutput: {
+      type: String,
+      default: '',
+    },
+    importantPoints: {
+      type: String,
+      default: '',
+    },
+    estimatedMinutes: {
+      type: Number,
+      default: 15,
+      min: 1,
+      max: 1440,
+    },
     oromoSummary: {
       type: String,
       default: '',

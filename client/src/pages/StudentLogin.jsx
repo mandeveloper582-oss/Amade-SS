@@ -19,7 +19,10 @@ function StudentLogin() {
   }
 
   if (user) {
-    return <Navigate to={location.state?.redirectTo || "/student/dashboard"} replace />;
+    const alreadyLoggedInRedirect = location.state?.enrollCourse
+      ? `/academy/${location.state.enrollCourse}?enroll=1`
+      : location.state?.redirectTo || "/student/dashboard";
+    return <Navigate to={alreadyLoggedInRedirect} replace />;
   }
 
   const handleSubmit = async (event) => {

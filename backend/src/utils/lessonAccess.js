@@ -61,7 +61,26 @@ const buildStudentLessonView = async (lessons, enrollment, studentId) => {
     const visibleLesson = { ...lesson };
 
     if (isLocked) {
-      ['content', 'videoUrl', 'resources', 'learningObjectives', 'pdfName', 'pdfPath', 'pdfMimeType', 'pdfSize'].forEach(
+      [
+        'content',
+        'englishContent',
+        'introduction',
+        'stepByStep',
+        'practicalExamples',
+        'expectedOutput',
+        'importantPoints',
+        'oromoSummary',
+        'codeExamples',
+        'exercises',
+        'videoUrl',
+        'resources',
+        'learningObjectives',
+        'pdfName',
+        'pdfPath',
+        'pdfMimeType',
+        'pdfSize',
+        'pdfStorageId',
+      ].forEach(
         (field) => delete visibleLesson[field],
       );
     }

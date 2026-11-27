@@ -21,6 +21,7 @@ import AdminStudents from "./pages/AdminStudents";
 import AdminEnrollments from "./pages/AdminEnrollments";
 import AdminContentManager from "./pages/AdminContentManager";
 import AdminMessages from "./pages/AdminMessages";
+import AdminCertificateRequests from "./pages/AdminCertificateRequests";
 import StudentLogin from "./pages/StudentLogin";
 import StudentRegister from "./pages/StudentRegister";
 import StudentDashboard from "./pages/StudentDashboard";
@@ -49,6 +50,7 @@ function App() {
               <Route path="/admin/services" element={<AdminContentManager kind="services" />} />
               <Route path="/admin/blog" element={<AdminContentManager kind="blog" />} />
               <Route path="/admin/messages" element={<AdminMessages />} />
+              <Route path="/admin/certificate-requests" element={<AdminCertificateRequests />} />
 
               <Route path="/student/login" element={<StudentLogin />} />
               <Route path="/student/register" element={<StudentRegister />} />

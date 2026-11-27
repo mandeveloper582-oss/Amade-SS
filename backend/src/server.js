@@ -1,11 +1,22 @@
 require('dotenv').config();
 const app = require('./app');
-const { connectDB } = require('./config/db');
+const { connectDB, disconnectDB } = require('./config/db');
 
 const PORT = process.env.PORT || 5000;
 
+function validateProductionEnvironment() {
+  if (process.env.NODE_ENV !== 'production') return;
+
+  const required = ['MONGO_URI', 'JWT_SECRET'];
+  const missing = required.filter((name) => !process.env[name]);
+  if (missing.length) {
+    throw new Error(`Missing required production environment variables: ${missing.join(', ')}`);
+  }
+}
+
 async function startServer() {
   try {
+    validateProductionEnvironment();
     const databaseConnected = await connectDB();
 
     if (!databaseConnected && process.env.NODE_ENV === 'production') {
@@ -24,6 +35,31 @@ async function startServer() {
       }
       process.exitCode = 1;
     });
+
+    let shuttingDown = false;
+    const shutdown = async (signal) => {
+      if (shuttingDown) return;
+      shuttingDown = true;
+      console.log(`Received ${signal}. Shutting down the AMADE backend.`);
+
+      try {
+        await new Promise((resolve) => server.close(resolve));
+      } catch (error) {
+        console.error('HTTP server shutdown failed:', error.message);
+      }
+
+      try {
+        await disconnectDB();
+      } catch (error) {
+        console.error('Database shutdown failed:', error.message);
+      }
+
+      process.exitCode = 0;
+      setImmediate(() => process.exit());
+    };
+
+    process.once('SIGTERM', () => shutdown('SIGTERM'));
+    process.once('SIGINT', () => shutdown('SIGINT'));
   } catch (error) {
     console.error('Failed to start AMADE backend:', error.message);
     process.exitCode = 1;

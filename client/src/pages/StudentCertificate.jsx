@@ -10,6 +10,8 @@ function StudentCertificate() {
   const { user, isLoading: isAuthLoading } = useStudentAuth();
   const studentId = user?._id;
   const [certificate, setCertificate] = useState(null);
+  const [requestStatus, setRequestStatus] = useState("loading");
+  const [rejectionReason, setRejectionReason] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -17,12 +19,40 @@ function StudentCertificate() {
     let active = true;
     const timer = window.setTimeout(async () => {
       try {
-        const response = await api.post(
-          `/students/courses/${courseId}/certificate`,
-          {},
+        const statusResponse = await api.get(
+          `/students/courses/${courseId}/certificate/status`,
           { authTokenKey: "amade_student_token" },
         );
-        if (active) setCertificate(response.data.data);
+        const status = statusResponse.data.data;
+        if (!active) return;
+
+        if (status.status === "approved" && status.certificate) {
+          setCertificate({
+            certificateNumber: status.certificate.certificateNumber,
+            issuedAt: status.certificate.issuedAt,
+            studentName: status.studentName,
+            courseTitle: status.courseTitle,
+          });
+          setRequestStatus("approved");
+        } else if (status.status === "pending") {
+          setRequestStatus("pending");
+        } else if (status.status === "rejected") {
+          setRequestStatus("rejected");
+          setRejectionReason(status.rejectionReason || "");
+        } else {
+          const response = await api.post(
+            `/students/courses/${courseId}/certificate`,
+            {},
+            { authTokenKey: "amade_student_token" },
+          );
+          if (!active) return;
+          if (response.data.data.status === "approved") {
+            setCertificate(response.data.data);
+            setRequestStatus("approved");
+          } else {
+            setRequestStatus("pending");
+          }
+        }
       } catch (requestError) {
         if (active) setError(requestError.response?.data?.message || "Certificate could not be issued.");
       }
@@ -33,6 +63,26 @@ function StudentCertificate() {
       window.clearTimeout(timer);
     };
   }, [courseId, isAuthLoading, studentId]);
+
+  const resubmitRequest = async () => {
+    setError("");
+    setRequestStatus("loading");
+    try {
+      const response = await api.post(
+        `/students/courses/${courseId}/certificate`,
+        {},
+        { authTokenKey: "amade_student_token" },
+      );
+      if (response.data.data.status === "approved") {
+        setCertificate(response.data.data);
+        setRequestStatus("approved");
+      } else {
+        setRequestStatus("pending");
+      }
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Certificate request could not be resubmitted.");
+    }
+  };
 
   if (isAuthLoading) return <div className="grid min-h-screen place-items-center">Restoring secure session...</div>;
   if (!user) return <Navigate to="/student/login" replace />;
@@ -60,8 +110,24 @@ function StudentCertificate() {
           <p className="mt-3 text-red-700 dark:text-red-300">{error}</p>
           <Link to="/student/courses" className="mt-5 inline-flex rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white dark:bg-green-500 dark:text-slate-950">Return to My Courses</Link>
         </section>
+      ) : requestStatus === "loading" ? (
+        <p role="status" className="mx-auto max-w-3xl rounded-2xl bg-white p-8 text-center dark:bg-slate-900">Verifying course completion and certificate status...</p>
+      ) : requestStatus === "pending" ? (
+        <section className="mx-auto max-w-3xl rounded-2xl border border-amber-200 bg-white p-8 text-center dark:border-amber-900 dark:bg-slate-900">
+          <Award aria-hidden="true" size={42} className="mx-auto text-amber-600" />
+          <h1 className="mt-4 text-2xl font-black">Certificate request pending</h1>
+          <p className="mt-3 text-slate-600 dark:text-slate-300">Your completion has been submitted for administrator review. It will be available here after approval.</p>
+        </section>
+      ) : requestStatus === "rejected" ? (
+        <section className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-white p-8 text-center dark:border-red-900 dark:bg-slate-900">
+          <h1 className="text-2xl font-black">Certificate request rejected</h1>
+          <p className="mt-3 text-red-700 dark:text-red-300">{rejectionReason || "The administrator rejected this request. Review course completion and submit a new request if eligible."}</p>
+          <button type="button" onClick={resubmitRequest} className="mt-5 inline-flex rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white dark:bg-green-500 dark:text-slate-950">
+            Submit a new request
+          </button>
+        </section>
       ) : !certificate ? (
-        <p role="status" className="mx-auto max-w-3xl rounded-2xl bg-white p-8 text-center dark:bg-slate-900">Verifying course completion and preparing your certificate...</p>
+        <p role="status" className="mx-auto max-w-3xl rounded-2xl bg-white p-8 text-center dark:bg-slate-900">Certificate is not available.</p>
       ) : (
         <>
           <section id="amade-certificate" className="mx-auto grid min-h-[34rem] max-w-5xl place-items-center border-[10px] border-double border-green-700 bg-white p-8 text-center shadow-xl dark:bg-white sm:p-14">

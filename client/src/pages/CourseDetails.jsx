@@ -339,6 +339,7 @@ function CourseDetails() {
                                   {lesson.moduleTitle && <p className="mt-1 text-xs font-semibold text-slate-500">{lesson.moduleTitle}</p>}
                                   <h3 className="mt-1 text-lg font-bold text-slate-950 dark:text-white">{lesson.title}</h3>
                                   {lesson.description && <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{lesson.description}</p>}
+                                  {lesson.estimatedMinutes && <p className="mt-2 text-xs font-semibold text-slate-500">{lesson.estimatedMinutes} min study time</p>}
                                 </div>
                                 <button
                                   type="button"
@@ -366,9 +367,14 @@ function CourseDetails() {
                                       <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-700 dark:text-slate-300">{lesson.englishContent || lesson.content}</p>
                                     </section>
                                   )}
+                                  {lesson.introduction && <section className="mt-4 rounded-xl bg-white p-4 dark:bg-slate-950"><h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">Introduction</h4><p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-700 dark:text-slate-300">{lesson.introduction}</p></section>}
+                                  {lesson.stepByStep && <section className="mt-4 rounded-xl bg-white p-4 dark:bg-slate-950"><h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">Step-by-step explanation</h4><p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-700 dark:text-slate-300">{lesson.stepByStep}</p></section>}
+                                  {lesson.practicalExamples && <section className="mt-4 rounded-xl bg-white p-4 dark:bg-slate-950"><h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">Practical examples</h4><p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-700 dark:text-slate-300">{lesson.practicalExamples}</p></section>}
                                   {lesson.codeExamples && (
                                     <pre className="mt-4 overflow-x-auto rounded-xl bg-slate-950 p-4 text-sm leading-6 text-green-200"><code>{lesson.codeExamples}</code></pre>
                                   )}
+                                  {lesson.expectedOutput && <section className="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700"><h4 className="font-bold">Expected output</h4><pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-sm">{lesson.expectedOutput}</pre></section>}
+                                  {lesson.importantPoints && <section className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30"><h4 className="font-bold text-amber-900 dark:text-amber-200">Important points</h4><p className="mt-2 whitespace-pre-wrap text-sm leading-7">{lesson.importantPoints}</p></section>}
                                   {lesson.exercises && (
                                     <section className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
                                       <h4 className="font-bold text-blue-900 dark:text-blue-200">Practical exercise</h4>

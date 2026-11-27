@@ -66,6 +66,12 @@ const createLesson = asyncHandler(async (req, res) => {
     description,
     content,
     englishContent,
+    introduction,
+    stepByStep,
+    practicalExamples,
+    expectedOutput,
+    importantPoints,
+    estimatedMinutes,
     oromoSummary,
     codeExamples,
     exercises,
@@ -100,6 +106,12 @@ const createLesson = asyncHandler(async (req, res) => {
     description,
     content,
     englishContent,
+    introduction,
+    stepByStep,
+    practicalExamples,
+    expectedOutput,
+    importantPoints,
+    estimatedMinutes,
     oromoSummary,
     codeExamples,
     exercises,
@@ -134,6 +146,12 @@ const updateLesson = asyncHandler(async (req, res) => {
     'description',
     'content',
     'englishContent',
+    'introduction',
+    'stepByStep',
+    'practicalExamples',
+    'expectedOutput',
+    'importantPoints',
+    'estimatedMinutes',
     'oromoSummary',
     'codeExamples',
     'exercises',
@@ -209,7 +227,29 @@ const deleteLesson = asyncHandler(async (req, res) => {
     enrollment.progress = publishedLessonCount
       ? Math.min(100, Math.round((completedCount / publishedLessonCount) * 100))
       : 0;
-    enrollment.status = enrollment.progress >= 100 ? 'completed' : 'active';
+    if (enrollment.progress >= 100) {
+      const publishedLessonIds = await Lesson.find({
+        course: courseId,
+        isPublished: true,
+      }).select('_id').lean();
+      const courseQuizLessonIds = (await Quiz.find({
+        lesson: { $in: publishedLessonIds.map(({ _id }) => _id) },
+      }).select('lesson').lean()).map(({ lesson }) => lesson);
+      let allQuizzesPassed = true;
+      if (courseQuizLessonIds.length) {
+        const passedLessonIds = new Set((await QuizAttempt.distinct('lesson', {
+          student: enrollment.student,
+          lesson: { $in: courseQuizLessonIds },
+          passed: true,
+        })).map(String));
+        allQuizzesPassed = courseQuizLessonIds.every((quizLessonId) => (
+          passedLessonIds.has(String(quizLessonId))
+        ));
+      }
+      enrollment.status = allQuizzesPassed ? 'completed' : 'active';
+    } else {
+      enrollment.status = 'active';
+    }
     enrollment.completedAt = enrollment.status === 'completed' ? enrollment.completedAt || new Date() : null;
     await enrollment.save();
   }));
